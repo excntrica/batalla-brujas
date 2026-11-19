@@ -4,11 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MotorCombate {
-    private static final int DANIO_ATAQUE = 35;
-    private static final int DANIO_ESPECIAL = 30;
-    private static final int CURA_ESPECIAL = 40;
     private static final int DANIO_QUEMADURA = 8;
-    private static final int RECARGA_ESPECIAL = 2;
     private static final int COSTE_COMBO = 2;
     private static final int ENERGIA_MAX = 5;
 
@@ -21,6 +17,7 @@ public class MotorCombate {
 
     public EstadoCombate estado(Jugador j) { return estados.get(j); }
 
+    /** Efectos al comenzar el turno (energía, quemadura). */
     public List<String> iniciarTurno(Jugador j) {
         List<String> log = new ArrayList<>();
         EstadoCombate e = estado(j);
@@ -33,24 +30,26 @@ public class MotorCombate {
         return log;
     }
 
+    /** @return null si la acción es legal, o el motivo por el que no lo es. */
     public String motivoInvalido(Jugador j, Accion a) {
         EstadoCombate e = estado(j);
         if (a.tienePoder() && a.tieneGlifo() && e.energia < COSTE_COMBO) {
             return "  Necesitas " + COSTE_COMBO + " de energía para un Combo (tienes " + e.energia + ").";
         }
-        if (a.tienePoder() && a.poder() == Poder.ESPECIAL && e.recargaEspecial > 0) {
-            return "  El Especial está en recarga " + e.recargaEspecial + " turno(s) más.";
+        if (a.tienePoder() && !a.poder().disponible(e)) {
+            return "  " + a.poder().getNombre() + " está en recarga " + e.recargaEspecial + " turno(s) más.";
         }
         return null;
     }
 
+    /** Ejecuta la Fase 2 del turno de 'activo' contra 'rival'. */
     public List<String> ejecutarTurno(Jugador activo, Jugador rival, Accion accion) {
         if (!accion.esValida()) throw new IllegalArgumentException("Acción vacía.");
         List<String> log = new ArrayList<>();
         EstadoCombate ea = estado(activo);
         EstadoCombate er = estado(rival);
+
         if (accion.tienePoder() && accion.tieneGlifo()) ea.energia -= COSTE_COMBO;
-        boolean ataqueFallido = false;
 
         Glifo glifo = null;
         if (accion.tieneGlifo()) {
@@ -59,46 +58,19 @@ public class MotorCombate {
         }
 
         int danioBase = 0;
-        boolean defensaFallida = false;
+        boolean ataqueFallido = false;
+        boolean defensaJugada = false;
 
-        // --- Poder del aquelarre ---
+        // --- Poder del aquelarre (polimorfismo: el poder sabe ejecutarse) ---
         if (accion.tienePoder()) {
-            Aquelarre aq = activo.getAquelarre();
-            switch (accion.poder()) {
-                case ATAQUE -> {
-                    log.add(activo.getNombre() + " usa " + aq.getAtaque() + ".");
-                    if (er.escudoActivo) {
-                        ataqueFallido = true;
-                        log.add("  ¡El ataque falla! " + rival.getNombre() + " estaba a la defensa.");
-                    } else {
-                        danioBase += DANIO_ATAQUE;
-                    }
-                }
-                case ESPECIAL -> {
-                    log.add(activo.getNombre() + " usa " + aq.getEspecial() + ".");
-                    ea.recargaEspecial = RECARGA_ESPECIAL + 1; // se descuenta al final de este turno
-                    if (aq == Aquelarre.CURACION) {
-                        activo.curar(CURA_ESPECIAL);
-                        log.add("  Recupera " + CURA_ESPECIAL + " PV.");
-                    } else {
-                        danioBase += DANIO_ESPECIAL;
-                        er.turnosDebilitado = 2;
-                        log.add("  " + rival.getNombre() + " queda debilitado 2 turnos.");
-                    }
-                }
-                case DEFENSA -> {
-                    if (ea.defensaBloqueada) {
-                        defensaFallida = true;
-                        log.add(activo.getNombre() + " intenta " + aq.getDefensa()
-                                + " pero las raíces la bloquean.");
-                    } else {
-                        ea.escudoActivo = true;
-                        ea.reduccionEscudo = 0.5;
-                        ea.escudoInflamable = CalculadoraDanio.esDefensaOrganica(aq);
-                        log.add(activo.getNombre() + " usa " + aq.getDefensa() + ".");
-                    }
-                }
+            ContextoPoder ctx = new ContextoPoder(activo, rival, ea, er, log);
+            int resultado = accion.poder().ejecutar(ctx);
+            if (resultado == -1) {
+                ataqueFallido = true;
+            } else {
+                danioBase += resultado;
             }
+            defensaJugada = ea.escudoActivo;
         }
 
         // --- Glifo ---
@@ -116,7 +88,7 @@ public class MotorCombate {
                     danioBase += 15;
                     er.congelado = true;
                     log.add("  " + rival.getNombre() + " se ralentiza: su próximo ataque hará la mitad.");
-                    if (accion.tienePoder() && accion.poder() == Poder.DEFENSA && !defensaFallida) {
+                    if (defensaJugada) {
                         ea.reduccionEscudo = 0.7;
                         ea.escudoInflamable = false;
                         log.add("  Se forma una barricada de hielo (escudo reforzado).");
@@ -176,5 +148,3 @@ public class MotorCombate {
         return log;
     }
 }
-
-

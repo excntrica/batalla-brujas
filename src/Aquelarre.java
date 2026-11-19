@@ -1,47 +1,55 @@
+import java.util.List;
+
 public enum Aquelarre {
-    ABOMINACIONES("Abominaciones", "Puño de Lodo", "Invocar Golem", "Muro Viscoso"),
-    PLANTAS("Plantas", "Látigo de Espinas", "Raíces Atrapadoras", "Barrera de Zarzas"),
-    ILUSIONES("Ilusiones", "Rayo Ilusorio", "Clones Distractores", "Espejismo Evasivo"),
-    BARDO("Bardo", "Onda Sonora", "Melodía Debilitadora", "Barrera Acústica"),
-    CURACION("Curación", "Pulso Vital", "Regeneración", "Aura Protectora"),
-    BESTIAS("Bestias", "Zarpazo Salvaje", "Invocar Bestia", "Instinto Evasivo"),
-    POCIONES("Pociones", "Bomba Explosiva", "Frasco de Veneno", "Cortina de Humo"),
-    ORACULO("Oráculo", "Descarga Psíquica", "Invocar Espíritu", "Visión Futura"),
-    CONSTRUCCION("Construcción", "Golpe Potenciado", "Pilar de Roca", "Armadura de Piedra"),
-    EMPERADOR("Emperador", "Rayo de Bastón", "Sello Restrictivo", "Escudo Imperial");
+    ABOMINACIONES("Abominaciones", "Puño de Lodo", "Invocar Golem", "Muro Viscoso", false, false),
+    PLANTAS("Plantas", "Látigo de Espinas", "Raíces Atrapadoras", "Barrera de Zarzas", false, false),
+    ILUSIONES("Ilusiones", "Rayo Ilusorio", "Clones Distractores", "Espejismo Evasivo", false, false),
+    BARDO("Bardo", "Onda Sonora", "Melodía Debilitadora", "Barrera Acústica", false, false),
+    CURACION("Curación", "Pulso Vital", "Regeneración", "Aura Protectora", true, false),
+    BESTIAS("Bestias", "Zarpazo Salvaje", "Invocar Bestia", "Instinto Evasivo", false, false),
+    POCIONES("Pociones", "Bomba Explosiva", "Frasco de Veneno", "Cortina de Humo", false, false),
+    ORACULO("Oráculo", "Descarga Psíquica", "Invocar Espíritu", "Visión Futura", false, false),
+    CONSTRUCCION("Construcción", "Golpe Potenciado", "Pilar de Roca", "Armadura de Piedra", false, false),
+    EMPERADOR("Emperador", "Rayo de Bastón", "Sello Restrictivo", "Escudo Imperial", false, true);
 
     private final String nombre;
-    private final String ataque;
-    private final String especial;
-    private final String defensa;
+    private final Poder ataque;
+    private final Poder especial;
+    private final Poder defensa;
 
-    Aquelarre(String nombre, String ataque, String especial, String defensa) {
+    Aquelarre(String nombre, String ataque, String especial, String defensa,
+              boolean especialCura, boolean especialSella) {
         this.nombre = nombre;
-        this.ataque = ataque;
-        this.especial = especial;
-        this.defensa = defensa;
+        this.ataque = new PoderAtaque(ataque);
+        this.especial = new PoderEspecial(especial, especialCura, especialSella);
+        this.defensa = new PoderDefensa(defensa);
     }
 
     public String getNombre() { return nombre; }
-    public String getAtaque() { return ataque; }
-    public String getEspecial() { return especial; }
-    public String getDefensa() { return defensa; }
+    public Poder getAtaque() { return ataque; }
+    public Poder getEspecial() { return especial; }
+    public Poder getDefensa() { return defensa; }
+
+    /** Poderes en el orden que se muestran: 1 Ataque, 2 Especial, 3 Defensa. */
+    public List<Poder> getPoderes() {
+        return List.of(ataque, especial, defensa);
+    }
 
     public Aquelarre getVentaja() {
-        switch (this) {
-            case ABOMINACIONES: return CONSTRUCCION;
-            case PLANTAS:       return ABOMINACIONES;
-            case ILUSIONES:     return BESTIAS;
-            case BARDO:         return ILUSIONES;
-            case CURACION:      return POCIONES;
-            case BESTIAS:       return BARDO;
-            case POCIONES:      return PLANTAS;
-            case ORACULO:       return EMPERADOR;
-            case CONSTRUCCION:  return ORACULO;
-            case EMPERADOR:     return CURACION;
-            default: throw new IllegalStateException("Aquelarre desconocido: " + this);
-        }
+        return switch (this) {
+            case ABOMINACIONES -> CONSTRUCCION;
+            case PLANTAS       -> ABOMINACIONES;
+            case ILUSIONES     -> BESTIAS;
+            case BARDO         -> ILUSIONES;
+            case CURACION      -> POCIONES;
+            case BESTIAS       -> BARDO;
+            case POCIONES      -> PLANTAS;
+            case ORACULO       -> EMPERADOR;
+            case CONSTRUCCION  -> ORACULO;
+            case EMPERADOR     -> CURACION;
+        };
     }
+
     public String getBruja() {
         return switch (this) {
             case ABOMINACIONES -> "Amity";
@@ -57,7 +65,6 @@ public enum Aquelarre {
         };
     }
 
-
     public boolean tieneVentajaSobre(Aquelarre otro) {
         return getVentaja() == otro;
     }
@@ -67,3 +74,4 @@ public enum Aquelarre {
         return nombre;
     }
 }
+

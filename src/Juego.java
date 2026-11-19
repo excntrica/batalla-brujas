@@ -8,8 +8,12 @@ public class Juego {
 
     public static void main(String[] args) {
         System.out.println("==================================================");
-        System.out.println("   BATALLA DE BRUJAS - Las Islas Hirvientes");
+        System.out.println("   BATALLA DE BRUJAS - The Owl House");
         System.out.println("==================================================");
+
+        if (Historial.hayPartidas()) {
+            System.out.println("Hay " + Historial.leer().size() + " partida(s) guardada(s) en historial.txt.");
+        }
 
         int modo = leerEntero("Modo de juego:\n  1. Jugador vs CPU\n  2. Dos jugadores (mismo teclado)", 1, 2);
 
@@ -33,14 +37,37 @@ public class Juego {
 
         int turno = 0;
         boolean fin = false;
+        Jugador ganadorFinal = null;
+
         while (!fin) {
             int i = turno % 2;
-            fin = jugarTurno(jugadores[i], jugadores[1 - i], motor, esCpu[i], modo == 2, i);
+            boolean terminada = jugarTurno(jugadores[i], jugadores[1 - i], motor, esCpu[i], modo == 2, i);
+            if (terminada) {
+                ganadorFinal = jugadores[i].estaVivo() ? jugadores[i] : jugadores[1 - i];
+            }
+            fin = terminada;
             turno++;
         }
+
         System.out.println("\nFin de la partida.");
+
+        if (ganadorFinal != null) {
+            Jugador perdedor = (ganadorFinal == j1) ? j2 : j1;
+            Historial.registrar(ganadorFinal.getNombre(), perdedor.getNombre(), turno);
+            System.out.println("Partida guardada en historial.txt");
+        }
+
+        if (Historial.hayPartidas()
+                && leerEntero("\n¿Ver el historial de partidas?\n  1. Sí\n  2. No", 1, 2) == 1) {
+            System.out.println("\n================ HISTORIAL ================");
+            for (String l : Historial.leer()) {
+                System.out.println("  " + l);
+            }
+            System.out.println("===========================================");
+        }
     }
 
+    // ---------- Creación de jugadores ----------
 
     private static Jugador crearJugador(String porDefecto, MazoGlifos mazo) {
         Aquelarre[] todos = Aquelarre.values();
@@ -50,7 +77,7 @@ public class Juego {
             System.out.printf("  %2d. %-13s -> juegas como %s (fuerte vs %s)%n",
                     i + 1, a.getNombre(), a.getBruja(), a.getVentaja().getNombre());
             System.out.printf("      Ataque: %s | Especial: %s | Defensa: %s%n",
-                    a.getAtaque(), a.getEspecial(), a.getDefensa());
+                    a.getAtaque().getNombre(), a.getEspecial().getNombre(), a.getDefensa().getNombre());
         }
         int op = leerEntero("Tu elección", 1, todos.length);
         Aquelarre elegido = todos[op - 1];
@@ -58,6 +85,7 @@ public class Juego {
         return new Jugador(elegido.getBruja(), elegido, mazo);
     }
 
+    // ---------- Turno ----------
 
     /** @return true si la partida terminó. */
     private static boolean jugarTurno(Jugador activo, Jugador rival, MotorCombate motor,
@@ -125,9 +153,10 @@ public class Juego {
         int glifo = -1;
 
         if (tipo == 1 || tipo == 3) {
+            List<Poder> poderes = activo.getAquelarre().getPoderes();
             while (true) {
                 int p = leerEntero("  Elige poder (1 Ataque, 2 Especial, 3 Defensa)", 1, 3);
-                poder = Poder.values()[p - 1];
+                poder = poderes.get(p - 1);
                 if (activo.puedeUsarPoder(poder)) break;
                 System.out.println("  Ese poder está bloqueado este turno. Elige otro.");
             }
@@ -148,17 +177,19 @@ public class Juego {
     }
 
     private static Poder pedirPoderLibre(Jugador activo) {
+        List<Poder> poderes = activo.getAquelarre().getPoderes();
         while (true) {
             int p = leerEntero("  Elige poder (1 Ataque, 2 Especial, 3 Defensa)", 1, 3);
-            Poder poder = Poder.values()[p - 1];
+            Poder poder = poderes.get(p - 1);
             if (activo.puedeUsarPoder(poder)) return poder;
             System.out.println("  Ese poder está bloqueado este turno. Elige otro.");
         }
     }
 
     private static Accion decidirCpu(Jugador activo, MotorCombate motor) {
+        List<Poder> poderes = activo.getAquelarre().getPoderes();
         while (true) {
-            Poder poder = Poder.values()[RND.nextInt(3)];
+            Poder poder = poderes.get(RND.nextInt(poderes.size()));
             int glifo = RND.nextInt(Jugador.GLIFOS_EN_MANO);
             Accion a = switch (RND.nextInt(3)) {
                 case 0 -> Accion.soloPoder(poder);
@@ -175,6 +206,7 @@ public class Juego {
         Consola.ganador(g);
     }
 
+    // ---------- Entrada segura ----------
 
     private static int leerEntero(String mensaje, int min, int max) {
         while (true) {
