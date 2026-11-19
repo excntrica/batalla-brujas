@@ -1,8 +1,8 @@
 # Witch Battle
 
 A turn-based 1 vs 1 witch battle game for the console, written in Java.
-Built with Object-Oriented Programming: classes, enums, records and objects
-that talk to each other. Inspired by *The Owl House*.
+Built with Object-Oriented Programming: classes, enums, records, inheritance
+and polymorphism. Inspired by *The Owl House*.
 
 Developed with **Java 23** in **IntelliJ IDEA 2026.3**.
 
@@ -54,26 +54,52 @@ another coven (attacking that one deals critical damage).
 - **Cooldown:** the Special cannot be used for 2 turns after you use it.
 - **No repeats:** you cannot use the same power or the same glyph two turns in a row.
 - **Defense:** if the rival is defending, your Attack fails.
+- **History:** every finished game is saved to `historial.txt` and can be
+  reviewed when you launch the game again.
 
 ## Classes in the project
 
 | Class | What it does |
 |---|---|
-| `Aquelarre` | Enum with the 10 covens, their powers and their advantage. |
+| `Aquelarre` | Enum with the 10 covens. Builds their three powers and holds the advantage. |
 | `Glifo` | Enum with the 4 glyphs. |
-| `Poder` | Enum with the three power types: Attack, Special, Defense. |
+| `Poder` | Abstract class: the base of every power. Declares `ejecutar()`. |
+| `PoderAtaque` | Attack power. Fails if the rival is defending. |
+| `PoderEspecial` | Special power. Heals, weakens or seals the rival, and has a cooldown. |
+| `PoderDefensa` | Defense power. Raises a shield against the next hit. |
+| `ContextoPoder` | Carries everything a power needs to run (players, state, log). |
 | `Accion` | Record that represents what a player does on their turn. |
 | `MazoGlifos` | The glyph deck, using `Stack` and `Collections.shuffle`. |
 | `Jugador` | HP, hand of glyphs and the no-repeat blocking rules. |
 | `EstadoCombate` | Temporary effects: burn, shield, energy, cooldown... |
 | `CalculadoraDanio` | Works out the damage, including the coven-critical hit. |
 | `MotorCombate` | Applies the turn rules and returns the result. |
-| `Consola` | Everything shown on screen. |
+| `Consola` | Everything shown on screen: colours, health bars and panels. |
+| `Historial` | Saves and reads the game history from a text file. |
 | `Juego` | The `main` method and the game loop. |
 
-The project is split in three parts: the data (`Aquelarre`, `Glifo`),
-the rules (`MotorCombate`, `CalculadoraDanio`) and the console interface
-(`Consola`, `Juego`).
+## Design
+
+The project is split into three layers:
+
+- **Data:** `Aquelarre`, `Glifo`, `Poder` and its subclasses.
+- **Rules:** `MotorCombate`, `CalculadoraDanio`, `EstadoCombate`.
+- **Interface:** `Consola`, `Juego`.
+
+### Polymorphism
+
+Each power is an object that knows how to run itself. `Poder` is an abstract
+class with an `ejecutar()` method, and `PoderAtaque`, `PoderEspecial` and
+`PoderDefensa` implement it in their own way.
+
+`MotorCombate` never checks which coven it is dealing with: it just calls
+`poder.ejecutar(ctx)`. That means a new coven or a new kind of power can be
+added without touching the engine.
+
+### Persistence
+
+`Historial` writes the result of every game to `historial.txt` using
+`java.nio.file`, and reads it back when the game starts.
 
 ## How to run it
 
