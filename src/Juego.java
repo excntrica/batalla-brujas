@@ -67,8 +67,6 @@ public class Juego {
         }
     }
 
-    // ---------- Creación de jugadores ----------
-
     private static Jugador crearJugador(String porDefecto, MazoGlifos mazo) {
         Aquelarre[] todos = Aquelarre.values();
         System.out.println("\n" + porDefecto + ", elige tu aquelarre:");
@@ -85,9 +83,6 @@ public class Juego {
         return new Jugador(elegido.getBruja(), elegido, mazo);
     }
 
-    // ---------- Turno ----------
-
-    /** @return true si la partida terminó. */
     private static boolean jugarTurno(Jugador activo, Jugador rival, MotorCombate motor,
                                       boolean cpu, boolean pasarTeclado, int indice) {
         Consola.encabezadoTurno(activo.getNombre(), indice);
@@ -205,8 +200,6 @@ public class Juego {
     private static void anunciarGanador(Jugador g) {
         Consola.ganador(g);
     }
-
-    // ---------- Entrada segura ----------
 
     private static int leerEntero(String mensaje, int min, int max) {
         while (true) {

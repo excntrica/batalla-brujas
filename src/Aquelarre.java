@@ -30,7 +30,6 @@ public enum Aquelarre {
     public Poder getEspecial() { return especial; }
     public Poder getDefensa() { return defensa; }
 
-    /** Poderes en el orden que se muestran: 1 Ataque, 2 Especial, 3 Defensa. */
     public List<Poder> getPoderes() {
         return List.of(ataque, especial, defensa);
     }

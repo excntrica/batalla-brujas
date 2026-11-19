@@ -43,7 +43,6 @@ public class Jugador {
         return usado;
     }
 
-    /** Ahora se compara el objeto poder, no una constante de enum. */
     public boolean puedeUsarPoder(Poder p) {
         return p != poderBloqueado;
     }
@@ -53,7 +52,6 @@ public class Jugador {
                 && manoGlifos.get(indice) != glifoBloqueado;
     }
 
-    /** Al terminar el turno: lo usado hoy queda bloqueado mañana. */
     public void registrarUso(Poder poder, Glifo glifo) {
         poderBloqueado = poder;
         glifoBloqueado = glifo;

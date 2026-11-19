@@ -17,7 +17,6 @@ public class MotorCombate {
 
     public EstadoCombate estado(Jugador j) { return estados.get(j); }
 
-    /** Efectos al comenzar el turno (energía, quemadura). */
     public List<String> iniciarTurno(Jugador j) {
         List<String> log = new ArrayList<>();
         EstadoCombate e = estado(j);
@@ -30,7 +29,6 @@ public class MotorCombate {
         return log;
     }
 
-    /** @return null si la acción es legal, o el motivo por el que no lo es. */
     public String motivoInvalido(Jugador j, Accion a) {
         EstadoCombate e = estado(j);
         if (a.tienePoder() && a.tieneGlifo() && e.energia < COSTE_COMBO) {
@@ -42,7 +40,6 @@ public class MotorCombate {
         return null;
     }
 
-    /** Ejecuta la Fase 2 del turno de 'activo' contra 'rival'. */
     public List<String> ejecutarTurno(Jugador activo, Jugador rival, Accion accion) {
         if (!accion.esValida()) throw new IllegalArgumentException("Acción vacía.");
         List<String> log = new ArrayList<>();
@@ -73,7 +70,6 @@ public class MotorCombate {
             defensaJugada = ea.escudoActivo;
         }
 
-        // --- Glifo ---
         boolean usoFuego = false;
         if (glifo != null) {
             log.add(activo.getNombre() + " activa el " + glifo + ".");
@@ -107,13 +103,11 @@ public class MotorCombate {
             }
         }
 
-        // Ataque fallido sin daño de glifo: la defensa se gasta igualmente
         if (ataqueFallido && danioBase == 0) {
             er.escudoActivo = false;
             er.escudoInflamable = false;
         }
 
-        // --- Resolución de daño ---
         if (danioBase > 0) {
             boolean critico = CalculadoraDanio.esCritico(activo.getAquelarre(), rival.getAquelarre());
             int danio = CalculadoraDanio.calcular(danioBase, activo.getAquelarre(),
@@ -140,7 +134,6 @@ public class MotorCombate {
             log.add("  " + rival.getNombre() + " recibe " + danio + " de daño (PV: " + rival.getPv() + ").");
         }
 
-        // --- Fin de turno ---
         if (ea.turnosDebilitado > 0) ea.turnosDebilitado--;
         if (ea.recargaEspecial > 0) ea.recargaEspecial--;
         ea.defensaBloqueada = false; // el bloqueo solo dura su turno

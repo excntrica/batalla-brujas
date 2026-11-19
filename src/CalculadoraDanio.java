@@ -18,7 +18,6 @@ public final class CalculadoraDanio {
         return (int) Math.round(d);
     }
 
-    /** Aquelarres cuyas barreras son orgánicas y arden con Fuego. */
     public static boolean esDefensaOrganica(Aquelarre a) {
         return a == Aquelarre.PLANTAS || a == Aquelarre.BESTIAS || a == Aquelarre.ABOMINACIONES;
     }
